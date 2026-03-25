@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#ef9f27">
+  <title>Température Vin</title>
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icon-192.svg">
+  <style>
+    /* CSS RESETS & VARIABLES */
+    :root {
+      --color-bg: #f5f7fa;
+      --color-text: #2c3e50;
+      --color-card: #ffffff;
+      --color-static: #ef9f27;  /* Ambre */
+      --color-ventile: #378add; /* Bleu */
+      --color-warm: #3b6d11;    /* Vert */
+      --color-border: #e2e8f0;
+      --nav-height: 60px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    
+    body {
+      background-color: var(--color-bg);
+      color: var(--color-text);
+      padding-top: var(--nav-height);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAVIGATION */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: var(--nav-height);
+      background-color: var(--color-card);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      display: flex;
+      z-index: 1000;
+    }
+
+    .nav-btn {
+      flex: 1;
+      border: none;
+      background: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #94a3b8;
+      cursor: pointer;
+      position: relative;
+      outline: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.1;
+      padding: 0 5px;
+    }
+
+    .nav-btn.active-static { color: var(--color-static); }
+    .nav-btn.active-ventile { color: var(--color-ventile); }
+    .nav-btn.active-warm { color: var(--color-warm); }
+    
+    .nav-btn::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      display: none;
+    }
+    
+    .nav-btn.active-static::after { background-color: var(--color-static); display: block; }
+    .nav-btn.active-ventile::after { background-color: var(--color-ventile); display: block; }
+    .nav-btn.active-warm::after { background-color: var(--color-warm); display: block; }
+
+    /* LAYOUT */
+    main {
+      padding: 1.5rem 1rem;
+      max-width: 480px; 
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; }
+
+    /* CARDS & CONTROLS */
+    .card {
+      background: var(--color-card);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--color-border);
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group:last-child { margin-bottom: 0; }
+
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.8rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    
+    .val-badge {
+      background: var(--color-bg);
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--color-text);
+      min-width: 60px;
+      text-align: center;
+      border: 1px solid var(--color-border);
+    }
+    
+    /* Elegant Sliders */
+    input[type=range] {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+      border: 2px solid white;
+    }
+    
+    .theme-static input[type=range]::-webkit-slider-thumb { background: var(--color-static); }
+    .theme-static input[type=range]::-moz-range-thumb { background: var(--color-static); border: 2px solid white; height: 24px; width: 24px; border-radius: 50%; }
+    
+    .theme-ventile input[type=range]::-webkit-slider-thumb { background: var(--color-ventile); }
+    .theme-ventile input[type=range]::-moz-range-thumb { background: var(--color-ventile); border: 2px solid white; height: 24px; width: 24px; border-radius: 50%; }
+    
+    .theme-warm input[type=range]::-webkit-slider-thumb { background: var(--color-warm); }
+    .theme-warm input[type=range]::-moz-range-thumb { background: var(--color-warm); border: 2px solid white; height: 24px; width: 24px; border-radius: 50%; }
+
+    /* RESULTS */
+    .results {
+      text-align: center;
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+    
+    .result-header {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-main {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      letter-spacing: -1px;
+    }
+    .theme-static .result-main { color: var(--color-static); }
+    .theme-ventile .result-main { color: var(--color-ventile); }
+    .theme-warm .result-main { color: var(--color-warm); }
+
+    .result-stats {
+      display: flex;
+      justify-content: space-around;
+      background: var(--color-bg);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--color-border);
+    }
+    
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    
+    .stat-label {
+      font-size: 0.8rem;
+      color: #64748b;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    
+    .stat-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    .error-msg {
+      color: #ef4444;
+      font-weight: 500;
+      padding: 1.5rem;
+      display: none;
+      text-align: center;
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    /* GRAPH */
+    .graph-container {
+      position: relative;
+      height: 240px;
+      margin: 0 -1.5rem; /* Break out of padding */
+      width: calc(100% + 3rem);
+      border-top: 1px solid var(--color-border);
+      background: #ffffff;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    
+    /* Service worker status */
+    #sw-status {
+      text-align: center;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-top: 1rem;
+      padding-bottom: 2rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <button class="nav-btn active-static" id="btn-static" onclick="switchTab('static')">Froid statique</button>
+    <button class="nav-btn" id="btn-ventile" onclick="switchTab('ventile')">Froid ventilé</button>
+    <button class="nav-btn" id="btn-warm" onclick="switchTab('warm')">Réchauffement</button>
+  </nav>
+
+  <main>
+    <!-- SECTION FROID STATIQUE -->
+    <div id="sec-static" class="section active theme-static">
+      <div class="card">
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Ambiante</label>
+            <div class="val-badge"><span id="val-static-room">22</span> °C</div>
+          </div>
+          <input type="range" id="static-room" min="15" max="35" value="22" oninput="updateStatic()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température du Frigo</label>
+            <div class="val-badge"><span id="val-static-fridge">4</span> °C</div>
+          </div>
+          <input type="range" id="static-fridge" min="1" max="10" value="4" oninput="updateStatic()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Cible</label>
+            <div class="val-badge"><span id="val-static-target">15</span> °C</div>
+          </div>
+          <input type="range" id="static-target" min="6" max="20" value="15" oninput="updateStatic()">
+        </div>
+      </div>
+
+      <div class="card error-msg" id="err-static">
+        La température cible doit être supérieure au frigo et inférieure à l'ambiante.
+      </div>
+
+      <div class="card results" id="res-static">
+        <div class="result-header">Temps estimé</div>
+        <div class="result-main" id="out-static-time">--</div>
+        
+        <div class="result-stats">
+          <div class="stat-item">
+            <span class="stat-label">Début</span>
+            <span class="stat-value" id="out-static-start">--°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Écart</span>
+            <span class="stat-value"><span id="out-static-delta">--</span>°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Atteint</span>
+            <span class="stat-value"><span id="out-static-pct">--</span>%</span>
+          </div>
+        </div>
+        
+        <div class="graph-container">
+          <canvas id="canvas-static"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION FROID VENTILÉ -->
+    <div id="sec-ventile" class="section theme-ventile">
+      <div class="card">
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Ambiante</label>
+            <div class="val-badge"><span id="val-ventile-room">22</span> °C</div>
+          </div>
+          <input type="range" id="ventile-room" min="15" max="35" value="22" oninput="updateVentile()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température du Frigo</label>
+            <div class="val-badge"><span id="val-ventile-fridge">4</span> °C</div>
+          </div>
+          <input type="range" id="ventile-fridge" min="1" max="10" value="4" oninput="updateVentile()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Cible</label>
+            <div class="val-badge"><span id="val-ventile-target">15</span> °C</div>
+          </div>
+          <input type="range" id="ventile-target" min="6" max="20" value="15" oninput="updateVentile()">
+        </div>
+      </div>
+
+      <div class="card error-msg" id="err-ventile">
+        La température cible doit être supérieure au frigo et inférieure à l'ambiante.
+      </div>
+
+      <div class="card results" id="res-ventile">
+        <div class="result-header">Temps estimé</div>
+        <div class="result-main" id="out-ventile-time">--</div>
+        
+        <div class="result-stats">
+          <div class="stat-item">
+            <span class="stat-label">Début</span>
+            <span class="stat-value" id="out-ventile-start">--°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Écart</span>
+            <span class="stat-value"><span id="out-ventile-delta">--</span>°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Atteint</span>
+            <span class="stat-value"><span id="out-ventile-pct">--</span>%</span>
+          </div>
+        </div>
+        
+        <div class="graph-container">
+          <canvas id="canvas-ventile"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION RÉCHAUFFEMENT -->
+    <div id="sec-warm" class="section theme-warm">
+      <div class="card">
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température du Frigo</label>
+            <div class="val-badge"><span id="val-warm-fridge">4</span> °C</div>
+          </div>
+          <input type="range" id="warm-fridge" min="1" max="10" value="4" oninput="updateWarm()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Ambiante</label>
+            <div class="val-badge"><span id="val-warm-room">22</span> °C</div>
+          </div>
+          <input type="range" id="warm-room" min="15" max="35" value="22" oninput="updateWarm()">
+        </div>
+        <div class="form-group">
+          <div class="label-row">
+            <label>Température Cible</label>
+            <div class="val-badge"><span id="val-warm-target">15</span> °C</div>
+          </div>
+          <input type="range" id="warm-target" min="6" max="20" value="15" oninput="updateWarm()">
+        </div>
+      </div>
+
+      <div class="card error-msg" id="err-warm">
+        La température cible doit être supérieure au frigo et inférieure à l'ambiante.
+      </div>
+
+      <div class="card results" id="res-warm">
+        <div class="result-header">Temps estimé</div>
+        <div class="result-main" id="out-warm-time">--</div>
+        
+        <div class="result-stats">
+          <div class="stat-item">
+            <span class="stat-label">Début</span>
+            <span class="stat-value" id="out-warm-start">--°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Écart</span>
+            <span class="stat-value"><span id="out-warm-delta">--</span>°</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Atteint</span>
+            <span class="stat-value"><span id="out-warm-pct">--</span>%</span>
+          </div>
+        </div>
+
+        <div class="graph-container">
+          <canvas id="canvas-warm"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div id="sw-status"><span class="status-dot" id="sw-dot" style="background: #cbd5e1;"></span> <span id="sw-text">Initialisation...</span></div>
+  </main>
+
+  <script>
+    // Physics constants
+    const K_STATIC = 0.0045;   // min^-1
+    const K_VENTILE = 0.0077;  // min^-1  
+    const K_WARM = 0.0045;     // min^-1
+
+    // State
+    let activeTab = 'static'; // 'static', 'ventile' or 'warm'
+
+    // UI Navigation
+    function switchTab(tab) {
+      activeTab = tab;
+      
+      const tabs = ['static', 'ventile', 'warm'];
+      const colors = { static: '#ef9f27', ventile: '#378add', warm: '#3b6d11' };
+      
+      tabs.forEach(t => {
+        document.getElementById(`sec-${t}`).classList.remove('active');
+        document.getElementById(`btn-${t}`).classList.remove(`active-${t}`);
+      });
+      
+      document.getElementById(`sec-${tab}`).classList.add('active');
+      document.getElementById(`btn-${tab}`).classList.add(`active-${tab}`);
+      
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', colors[tab]);
+
+      if (tab === 'static') updateStatic();
+      else if (tab === 'ventile') updateVentile();
+      else updateWarm();
+    }
+
+    // Math functions
+    function calculateTime(T0, Tenv, Ttarget, k) {
+      const ratio = (Ttarget - Tenv) / (T0 - Tenv);
+      if (ratio <= 0) return Infinity; 
+      return -Math.log(ratio) / k;
+    }
+
+    function calculateTempAtTime(T0, Tenv, t, k) {
+      return Tenv + (T0 - Tenv) * Math.exp(-k * t);
+    }
+
+    function formatTime(minutes) {
+      if (!isFinite(minutes)) return "Jamais";
+      const totalMins = Math.round(minutes);
+      if (totalMins < 60) return `${totalMins} min`;
+      const hrs = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      return `${hrs} h ${mins.toString().padStart(2, '0')}`;
+    }
+
+    function drawGraph(canvasId, isCooling, T0, Tenv, Ttarget, targetMins, k, colorBase) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      
+      const rect = canvas.parentElement.getBoundingClientRect();
+      const w = rect.width;
+      const h = rect.height;
+      if (w === 0 || h === 0) return;
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, w, h);
+
+      const padding = { top: 30, right: 25, bottom: 40, left: 45 };
+      const graphW = w - padding.left - padding.right;
+      const graphH = h - padding.top - padding.bottom;
+      
+      const minT = Math.min(T0, Tenv) - 2;
+      const maxT = Math.max(T0, Tenv) + 2;
+      const rangeT = maxT - minT;
+      
+      let maxTime = targetMins * 1.3; 
+      if (!isFinite(maxTime) || maxTime <= 0) maxTime = 120; 
+
+      const getX = (t) => padding.left + (t / maxTime) * graphW;
+      const getY = (T) => padding.top + graphH - ((T - minT) / rangeT) * graphH;
+
+      ctx.lineWidth = 1;
+      ctx.font = '600 11px -apple-system, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = '#94a3b8';
+      ctx.strokeStyle = '#f1f5f9';
+
+      // Y Axis
+      for (let temp = Math.floor(minT); temp <= Math.ceil(maxT); temp += 5) {
+        const y = getY(temp);
+        if (y > padding.top && y < padding.top + graphH) {
+          ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(w - padding.right, y); ctx.stroke();
+          ctx.fillText(temp + '°', padding.left - 8, y);
+        }
+      }
+
+      // X Axis
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const stepMins = maxTime > 300 ? 120 : (maxTime > 120 ? 60 : 30);
+      for (let t = 0; t <= maxTime; t += stepMins) {
+        if (t === 0) continue;
+        const x = getX(t);
+        ctx.beginPath(); ctx.moveTo(x, padding.top + graphH); ctx.lineTo(x, padding.top + graphH + 6); ctx.stroke();
+        let label = t < 60 ? t + 'm' : Math.floor(t/60) + 'h' + (t%60 === 0 ? '' : t%60);
+        ctx.fillText(label, x, padding.top + graphH + 10);
+      }
+      ctx.fillText('0', padding.left, padding.top + graphH + 10);
+
+      // Gradient under curve
+      ctx.beginPath();
+      ctx.moveTo(getX(0), padding.top + graphH);
+      for (let t = 0; t <= maxTime; t += 2) {
+        ctx.lineTo(getX(t), getY(calculateTempAtTime(T0, Tenv, t, k)));
+      }
+      ctx.lineTo(getX(maxTime), padding.top + graphH);
+      ctx.closePath();
+      
+      const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + graphH);
+      gradient.addColorStop(0, colorBase + '33'); 
+      gradient.addColorStop(1, colorBase + '00'); 
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Curve
+      ctx.beginPath();
+      ctx.strokeStyle = colorBase;
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      for (let t = 0; t <= maxTime; t += 1) {
+        const x = getX(t);
+        const y = getY(calculateTempAtTime(T0, Tenv, t, k));
+        if (t === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Target Line
+      const yTarget = getY(Ttarget);
+      ctx.beginPath();
+      ctx.setLineDash([6, 6]);
+      ctx.strokeStyle = colorBase;
+      ctx.lineWidth = 2;
+      ctx.moveTo(padding.left, yTarget);
+      ctx.lineTo(w - padding.right, yTarget);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillStyle = colorBase;
+      ctx.font = '700 12px -apple-system, sans-serif';
+      ctx.fillText('Cible ' + Ttarget + '°', padding.left + 8, yTarget - 6);
+
+      // Target Point
+      if (isFinite(targetMins)) {
+        const xT = getX(targetMins);
+        
+        ctx.beginPath();
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = colorBase + '80';
+        ctx.lineWidth = 1;
+        ctx.moveTo(xT, yTarget);
+        ctx.lineTo(xT, padding.top + graphH);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.beginPath();
+        ctx.arc(xT, yTarget, 6, 0, Math.PI * 2);
+        ctx.fillStyle = colorBase;
+        ctx.fill();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+      }
+    }
+
+    function processCooling(idPrefix, k, color) {
+      const room = parseFloat(document.getElementById(`${idPrefix}-room`).value);
+      const fridge = parseFloat(document.getElementById(`${idPrefix}-fridge`).value);
+      const target = parseFloat(document.getElementById(`${idPrefix}-target`).value);
+
+      document.getElementById(`val-${idPrefix}-room`).innerText = room;
+      document.getElementById(`val-${idPrefix}-fridge`).innerText = fridge;
+      document.getElementById(`val-${idPrefix}-target`).innerText = target;
+
+      if (target <= fridge || target >= room) {
+        document.getElementById(`err-${idPrefix}`).style.display = 'block';
+        document.getElementById(`res-${idPrefix}`).style.display = 'none';
+        return;
+      }
+      
+      document.getElementById(`err-${idPrefix}`).style.display = 'none';
+      document.getElementById(`res-${idPrefix}`).style.display = 'block';
+
+      const timeMins = calculateTime(room, fridge, target, k);
+      const deltaT = Math.abs(room - target);
+      const totalDelta = Math.abs(room - fridge);
+      const pct = Math.round((deltaT / totalDelta) * 100);
+
+      document.getElementById(`out-${idPrefix}-time`).innerText = formatTime(timeMins);
+      document.getElementById(`out-${idPrefix}-delta`).innerText = (Math.round(deltaT * 10) / 10).toString().replace('.', ',');
+      document.getElementById(`out-${idPrefix}-pct`).innerText = pct;
+      document.getElementById(`out-${idPrefix}-start`).innerText = room;
+
+      setTimeout(() => {
+        drawGraph(`canvas-${idPrefix}`, true, room, fridge, target, timeMins, k, color);
+      }, 0);
+    }
+
+    function updateStatic() {
+      processCooling('static', K_STATIC, '#ef9f27');
+    }
+
+    function updateVentile() {
+      processCooling('ventile', K_VENTILE, '#378add');
+    }
+
+    function updateWarm() {
+      const fridge = parseFloat(document.getElementById('warm-fridge').value);
+      const room = parseFloat(document.getElementById('warm-room').value);
+      const target = parseFloat(document.getElementById('warm-target').value);
+
+      document.getElementById('val-warm-fridge').innerText = fridge;
+      document.getElementById('val-warm-room').innerText = room;
+      document.getElementById('val-warm-target').innerText = target;
+
+      if (target >= room || target <= fridge) {
+        document.getElementById('err-warm').style.display = 'block';
+        document.getElementById('res-warm').style.display = 'none';
+        return;
+      }
+
+      document.getElementById('err-warm').style.display = 'none';
+      document.getElementById('res-warm').style.display = 'block';
+
+      const timeMins = calculateTime(fridge, room, target, K_WARM);
+      const deltaT = Math.abs(target - fridge);
+      const totalDelta = Math.abs(room - fridge);
+      const pct = Math.round((deltaT / totalDelta) * 100);
+
+      document.getElementById('out-warm-time').innerText = formatTime(timeMins);
+      document.getElementById('out-warm-delta').innerText = (Math.round(deltaT * 10) / 10).toString().replace('.', ',');
+      document.getElementById('out-warm-pct').innerText = pct;
+      document.getElementById('out-warm-start').innerText = fridge;
+
+      setTimeout(() => {
+        drawGraph('canvas-warm', false, fridge, room, target, timeMins, K_WARM, '#3b6d11');
+      }, 0);
+    }
+
+    // Init
+    window.addEventListener('resize', () => {
+      if (activeTab === 'static') updateStatic();
+      else if (activeTab === 'ventile') updateVentile();
+      else updateWarm();
+    });
+    
+    // Initial setup
+    updateStatic();
+    
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(() => {
+            document.getElementById('sw-text').innerText = "Mode hors-ligne actif (PWA)";
+            document.getElementById('sw-dot').style.background = '#10b981';
+          })
+          .catch(() => {
+            document.getElementById('sw-text').innerText = "Erreur du mode hors-ligne";
+            document.getElementById('sw-dot').style.background = '#ef4444';
+          });
+      });
+    } else {
+      document.getElementById('sw-text').innerText = "Hors-ligne non supporté";
+    }
+  </script>
+</body>
+</html>

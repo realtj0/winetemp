@@ -1,0 +1,16 @@
+{
+  "name": "Température Vin",
+  "short_name": "Temp Vin",
+  "description": "Calculez le temps de refroidissement ou de réchauffement de votre bouteille de vin.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#378ADD",
+  "icons": [
+    {
+      "src": "./icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}
