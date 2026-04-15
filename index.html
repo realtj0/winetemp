@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#ef9f27">
+  <meta name="theme-color" content="#3b6d11">
   <title>Température Vin</title>
   <link rel="manifest" href="./manifest.json">
   <link rel="icon" href="./icon-192.svg" type="image/svg+xml">
@@ -14,9 +14,9 @@
       --color-bg: #f5f7fa;
       --color-text: #2c3e50;
       --color-card: #ffffff;
-      --color-static: #ef9f27;  /* Ambre */
+      --color-static: #3b6d11;  /* Vert */
       --color-ventile: #378add; /* Bleu */
-      --color-warm: #3b6d11;    /* Vert */
+      --color-warm: #ef9f27;    /* Ambre */
       --color-border: #e2e8f0;
       --nav-height: 60px;
     }
@@ -453,7 +453,7 @@
       activeTab = tab;
       
       const tabs = ['static', 'ventile', 'warm'];
-      const colors = { static: '#ef9f27', ventile: '#378add', warm: '#3b6d11' };
+      const colors = { static: '#3b6d11', ventile: '#378add', warm: '#ef9f27' };
       
       tabs.forEach(t => {
         document.getElementById(`sec-${t}`).classList.remove('active');
@@ -651,7 +651,7 @@
     }
 
     function updateStatic() {
-      processCooling('static', K_STATIC, '#ef9f27');
+      processCooling('static', K_STATIC, '#3b6d11');
     }
 
     function updateVentile() {
@@ -687,7 +687,7 @@
       document.getElementById('out-warm-start').innerText = fridge;
 
       setTimeout(() => {
-        drawGraph('canvas-warm', false, fridge, room, target, timeMins, K_WARM, '#3b6d11');
+        drawGraph('canvas-warm', false, fridge, room, target, timeMins, K_WARM, '#ef9f27');
       }, 0);
     }
 
