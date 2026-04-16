@@ -1,4 +1,4 @@
-const CACHE_NAME = 'winetemp-v1';
+const CACHE_NAME = 'winetemp-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -13,7 +13,9 @@ self.addEventListener('install', (event) => {
         return cache.addAll(ASSETS_TO_CACHE);
       })
   );
-  self.skipWaiting();
+  // Note: no skipWaiting() here — the new SW stays in "waiting" state
+  // until the user clicks "Recharger" in the update banner, which posts
+  // a SKIP_WAITING message (handled below).
 });
 
 self.addEventListener('activate', (event) => {
@@ -29,6 +31,12 @@ self.addEventListener('activate', (event) => {
     })
   );
   self.clients.claim();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('fetch', (event) => {

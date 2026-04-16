@@ -260,6 +260,37 @@
       background: #10b981;
       display: inline-block;
     }
+
+    /* UPDATE BANNER */
+    #update-banner {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      background: var(--color-text);
+      color: #ffffff;
+      padding: 0.9rem 1rem calc(0.9rem + env(safe-area-inset-bottom));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      z-index: 2000;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    #update-banner.visible { display: flex; }
+    #update-btn {
+      background: #ffffff;
+      color: var(--color-text);
+      border: none;
+      padding: 0.45rem 1.1rem;
+      border-radius: 20px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
   </style>
 </head>
 <body>
@@ -438,6 +469,11 @@
 
     <div id="sw-status"><span class="status-dot" id="sw-dot" style="background: #cbd5e1;"></span> <span id="sw-text">Initialisation...</span></div>
   </main>
+
+  <div id="update-banner">
+    <span>Nouvelle version disponible</span>
+    <button id="update-btn" type="button">Recharger</button>
+  </div>
 
   <script>
     // Physics constants
@@ -701,21 +737,57 @@
     // Initial setup
     updateStatic();
     
-    // Service Worker Registration
+    // Service Worker Registration + update flow
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./service-worker.js')
-          .then(() => {
+          .then((registration) => {
             document.getElementById('sw-text').innerText = "Mode hors-ligne actif (PWA)";
             document.getElementById('sw-dot').style.background = '#10b981';
+
+            // If a new SW is already waiting (tab was open during install), show banner
+            if (registration.waiting && navigator.serviceWorker.controller) {
+              showUpdateBanner(registration.waiting);
+            }
+
+            // Listen for new SW installations
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (!newWorker) return;
+              newWorker.addEventListener('statechange', () => {
+                // New SW is installed AND a controller already exists => this is an update, not first install
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  showUpdateBanner(newWorker);
+                }
+              });
+            });
           })
           .catch(() => {
             document.getElementById('sw-text').innerText = "Erreur du mode hors-ligne";
             document.getElementById('sw-dot').style.background = '#ef4444';
           });
+
+        // Reload exactly once when the new SW takes control
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
       });
     } else {
       document.getElementById('sw-text').innerText = "Hors-ligne non supporté";
+    }
+
+    function showUpdateBanner(worker) {
+      const banner = document.getElementById('update-banner');
+      const btn = document.getElementById('update-btn');
+      banner.classList.add('visible');
+      btn.onclick = () => {
+        btn.disabled = true;
+        btn.innerText = 'Chargement...';
+        worker.postMessage({ type: 'SKIP_WAITING' });
+      };
     }
   </script>
 </body>
